@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Taylor 9.1–9.2 and 10.1–10.3 – Student-Friendly Summary</title>
+  <!-- If you use MathJax, this will render the LaTeX nicely -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<h1>Student-Friendly Summary: Taylor 9.1–9.2 and 10.1–10.3</h1>
+
+<hr>
+
+<h2>9.1 – Acceleration Without Rotation</h2>
+
+<p>
+Newton’s laws are strictly valid only in <strong>inertial frames</strong> (frames that are not accelerating or rotating).
+When we work in an accelerating frame, we can still use Newton’s second law if we add an extra
+“inertial” or “fictitious” force.
+</p>
+
+<p>
+In an inertial frame $S_0$:
+</p>
+<p>
+$m \ddot{\mathbf{r}}_0 = \mathbf{F}$  
+</p>
+<p>
+In an accelerating frame $S$ with acceleration $\mathbf{A}$:
+</p>
+<p>
+$m \ddot{\mathbf{r}} = \mathbf{F} - m \mathbf{A}$  
+</p>
+
+<p>
+So we define the inertial force:
+</p>
+<p>
+$\mathbf{F}_{\text{inertial}} = - m \mathbf{A}$  
+</p>
+
+<p>
+As Taylor writes, “This means we can continue to use Newton's second law in the noninertial frame $S$
+provided we agree that in the noninertial frame we must add an extra force-like term, often called the inertial force:
+$F_{\text{inertial}} = -mA$.” 
+</p>
+
+<h3>Pendulum in an Accelerating Car</h3>
+
+<p>
+Consider a pendulum of length $L$ in a car accelerating horizontally with acceleration $A$.
+In the car’s frame, gravity $\mathbf{g}$ and the inertial force $-m\mathbf{A}$ combine into an
+<strong>effective gravity</strong>:
+</p>
+
+<p>
+$\mathbf{g}_{\text{eff}} = \mathbf{g} - \mathbf{A}$  
+</p>
+
+<p>
+The equilibrium angle $\theta_{\text{eq}}$ (measured from the vertical) satisfies:
+</p>
+
+<p>
+$\theta_{\text{eq}} = \arctan\left(\dfrac{A}{g}\right)$  
+</p>
+
+<p>
+For small oscillations about this equilibrium, the pendulum behaves like an ordinary pendulum
+with $g$ replaced by $|\mathbf{g}_{\text{eff}}| = \sqrt{g^2 + A^2}$, so the angular frequency is:
+</p>
+
+<p>
+$\omega = \sqrt{\dfrac{\sqrt{g^2 + A^2}}{L}}$  
+</p>
+
+<p>
+Taylor notes that “the pendulum's equation of motion in the accelerating frame of the car is exactly the same
+as in an inertial frame, except that $g$ has been replaced by an effective $g_{\text{eff}} = g - A$.” 
+</p>
+
+<hr>
+
+<h2>9.2 – The Tides</h2>
+
+<h3>Basic Idea</h3>
+
+<p>
+The moon’s gravity does not just pull on the oceans; it pulls on the entire Earth.
+The Earth (including its oceans) has a small acceleration $\mathbf{A}$ toward the moon.
+The <strong>tidal force</strong> at a point on Earth is the difference between:
+</p>
+
+<ul>
+  <li><strong>Actual gravitational force of the moon at that point</strong></li>
+  <li><strong>Gravitational force the moon would exert at Earth’s center</strong></li>
+</ul>
+
+<p>
+Taylor writes: “the tidal force $F_{\text{tid}}$ … is the difference between the actual force of the moon on $m$
+and the corresponding force if $m$ were at the center of the earth.” 
+</p>
+
+<h3>Near Side and Far Side Bulges</h3>
+
+<ul>
+  <li><strong>Near side (facing the moon):</strong> moon’s pull is slightly stronger than at Earth’s center → water bulges toward the moon.</li>
+  <li><strong>Far side (away from the moon):</strong> moon’s pull is slightly weaker → water effectively bulges away from the moon.</li>
+</ul>
+
+<p>
+As Earth rotates, a point on the surface passes through both bulges → <strong>two high tides per day</strong>.
+</p>
+
+<h3>Equipotential Surface and Tide Height</h3>
+
+<p>
+The ocean surface is an <strong>equipotential surface</strong>, meaning the total potential energy
+(gravity of Earth + tidal potential) is constant along the surface.
+</p>
+
+<p>
+Let $h$ be the height difference between high and low tide. Taylor shows:
+</p>
+
+<p>
+$m g h = U_{\text{tid}}(Q) - U_{\text{tid}}(P)$  
+</p>
+
+<p>
+From his approximations, the tidal height due to the moon alone is:
+</p>
+
+<p>
+$h_{\text{moon}} \approx \dfrac{3 M_m R_e}{2 M_e d_0}$  
+</p>
+
+<p>
+Numerically:
+</p>
+
+<ul>
+  <li><strong>Moon alone:</strong> $h \approx 54\ \text{cm}$</li>
+  <li><strong>Sun alone:</strong> $h \approx 25\ \text{cm}$</li>
+  <li><strong>Spring tides (sun and moon aligned):</strong> $h \approx 79\ \text{cm}$</li>
+  <li><strong>Neap tides (sun and moon at right angle):</strong> $h \approx 29\ \text{cm}$</li>
+</ul>
+
+<p>
+Taylor concludes: “we would predict large tides (known as spring tides) with $h$ given by the sum of (9.19)
+and (9.20)… On the other hand, if the sun, earth, and moon form a right angle, then the two tidal effects will cancel
+and we would predict smaller tides (known as neap tides).” 
+</p>
+
+<hr>
+
+<h2>10.1 – Properties of the Center of Mass</h2>
+
+<h3>Center of Mass (CM)</h3>
+
+<p>
+For $N$ particles with masses $m_a$ and positions $\mathbf{r}_a$:
+</p>
+
+<p>
+$\mathbf{R} = \dfrac{1}{M} \sum_{a=1}^{N} m_a \mathbf{r}_a,\quad M = \sum_{a=1}^{N} m_a$  
+</p>
+
+<h3>Total Momentum</h3>
+
+<p>
+Total momentum:
+</p>
+
+<p>
+$\mathbf{P} = \sum_a m_a \dot{\mathbf{r}}_a = M \dot{\mathbf{R}}$  
+</p>
+
+<p>
+So the CM moves as if all mass were concentrated at a single particle of mass $M$.
+Taylor states: “the CM moves just as if it were a single particle of mass $M$ subject to the net external force
+on the system.” 
+</p>
+
+<h3>Angular Momentum Decomposition</h3>
+
+<p>
+Write each position as:
+</p>
+
+<p>
+$\mathbf{r}_a = \mathbf{R} + \mathbf{r}'_a$  
+</p>
+
+<p>
+Then the total angular momentum about some origin $O$ is:
+</p>
+
+<p>
+$\mathbf{L} = \mathbf{R} \times \mathbf{P} + \sum_a \mathbf{r}'_a \times m_a \dot{\mathbf{r}}'_a$  
+</p>
+
+<p>
+Interpretation:
+</p>
+
+<ul>
+  <li><strong>First term:</strong> angular momentum of CM motion (orbital part).</li>
+  <li><strong>Second term:</strong> angular momentum of motion relative to CM (spin part).</li>
+</ul>
+
+<h3>Kinetic Energy Decomposition</h3>
+
+<p>
+Total kinetic energy:
+</p>
+
+<p>
+$T = \dfrac{1}{2} \sum_a m_a \dot{\mathbf{r}}_a^2$  
+</p>
+
+<p>
+Using $\mathbf{r}_a = \mathbf{R} + \mathbf{r}'_a$ and $\sum_a m_a \mathbf{r}'_a = 0$:
+</p>
+
+<p>
+$T = \dfrac{1}{2} M \dot{\mathbf{R}}^2 + \dfrac{1}{2} \sum_a m_a \dot{\mathbf{r}}'^2_a$  
+</p>
+
+<p>
+So:
+</p>
+
+<ul>
+  <li><strong>First term:</strong> translational kinetic energy of CM.</li>
+  <li><strong>Second term:</strong> rotational kinetic energy about CM.</li>
+</ul>
+
+<p>
+Taylor summarizes: “For a rigid body, the only possible motion relative to the CM is rotation. Thus we can
+rephrase this result to say that $T = T(\text{motion of CM}) + T(\text{rotation about CM}).” 
+</p>
+
+<hr>
+
+<h2>10.2 – Rotation About a Fixed Axis</h2>
+
+<h3>Moment of Inertia and Angular Momentum</h3>
+
+<p>
+Consider a rigid body rotating about the $z$-axis with angular velocity $\omega$.
+For each mass element $m_a$ at distance $p_a$ from the $z$-axis:
+</p>
+
+<p>
+$L_z = \sum_a m_a p_a^2 \omega = I_{zz} \omega$  
+</p>
+
+<p>
+where:
+</p>
+
+<p>
+$I_{zz} = \sum_a m_a p_a^2 = \sum_a m_a (x_a^2 + y_a^2)$  
+</p>
+
+<h3>Products of Inertia and Misalignment</h3>
+
+<p>
+The $x$ and $y$ components of $\mathbf{L}$ are:
+</p>
+
+<p>
+$L_x = I_{xz} \omega,\quad L_y = I_{yz} \omega$  
+</p>
+
+<p>
+with:
+</p>
+
+<p>
+$I_{xz} = -\sum_a m_a x_a z_a,\quad I_{yz} = -\sum_a m_a y_a z_a$  
+</p>
+
+<p>
+If $I_{xz}$ and $I_{yz}$ are not zero, then $\mathbf{L}$ is <strong>not parallel</strong> to $\boldsymbol{\omega}$.
+Taylor emphasizes: “the angular momentum may not be in the same direction as the angular velocity,
+and the relation $L = I \omega$ that you may have learned in introductory physics is generally not true!” 
+</p>
+
+<p>
+Symmetry (e.g., reflection symmetry or axial symmetry) often makes these products of inertia vanish,
+so that $\mathbf{L}$ and $\boldsymbol{\omega}$ align.
+</p>
+
+<hr>
+
+<h2>10.3 – Rotation About Any Axis; The Inertia Tensor</h2>
+
+<h3>General Angular Velocity</h3>
+
+<p>
+Let the angular velocity be:
+</p>
+
+<p>
+$\boldsymbol{\omega} = (\omega_x, \omega_y, \omega_z)$  
+</p>
+
+<p>
+The angular momentum components are:
+</p>
+
+<p>
+$L_x = I_{xx} \omega_x + I_{xy} \omega_y + I_{xz} \omega_z$  
+</p>
+<p>
+$L_y = I_{yx} \omega_x + I_{yy} \omega_y + I_{yz} \omega_z$  
+</p>
+<p>
+$L_z = I_{zx} \omega_x + I_{zy} \omega_y + I_{zz} \omega_z$  
+</p>
+
+<h3>Inertia Tensor</h3>
+
+<p>
+We collect these into the <strong>inertia tensor</strong> $I$:
+</p>
+
+<p>
+$I = \begin{pmatrix}
+I_{xx} & I_{xy} & I_{xz} \\
+I_{yx} & I_{yy} & I_{yz} \\
+I_{zx} & I_{zy} & I_{zz}
+\end{pmatrix}$  
+</p>
+
+<p>
+Then:
+</p>
+
+<p>
+$\mathbf{L} = I \boldsymbol{\omega}$  
+</p>
+
+<p>
+Taylor writes: “Equation (10.36) can be rewritten in matrix form… which is called the moment of inertia tensor
+or just inertia tensor.” 
+</p>
+
+<h3>Principal Axes (Conceptual Preview)</h3>
+
+<p>
+There exist special directions (principal axes) where the inertia tensor becomes diagonal and
+$\mathbf{L}$ is parallel to $\boldsymbol{\omega}$. These axes are extremely useful for understanding
+the motion of rotating bodies (gyroscopes, tops, etc.).
+</p>
+
+<hr>
+</body>
+</html>
