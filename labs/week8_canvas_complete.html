@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 8 — Complete Canvas Reference</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         line-height: 1.6; color: #2d3b45; max-width: 980px; margin: 0 auto; padding: 20px;
+         background: #fafafa; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 32px; }
+  canvas { background: #1e1e1e; border: 2px solid #58595b; border-radius: 6px;
+           display: block; width: 100%; height: auto; }
+  .panel { display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
+           background: #fff; border: 1px solid #ddd; border-radius: 6px;
+           padding: 12px 16px; margin: 14px 0; }
+  .panel label { font-size: 0.9em; font-weight: 600; }
+  button { background: #ff8200; color: #fff; border: none; border-radius: 4px;
+           padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 0.9em; }
+  button:hover { background: #e07400; }
+  button.alt { background: #006c93; }
+  button.alt:hover { background: #005577; }
+  select, input[type=range] { font-size: 0.9em; }
+  #log { background: #1e1e1e; color: #d4d4d4; padding: 14px 18px; border-radius: 6px;
+         font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 0.82em;
+         line-height: 1.5; white-space: pre; overflow-x: auto; max-height: 420px;
+         overflow-y: auto; }
+  .ok   { color: #4ec9b0; }
+  .bad  { color: #f48771; }
+  .dim  { color: #6a9955; }
+  .note { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 12px 18px;
+          border-radius: 4px; margin: 16px 0; }
+  .warn { background: #f8d7da; border-left: 4px solid #dc3545; padding: 12px 18px;
+          border-radius: 4px; margin: 16px 0; }
+  .good { background: #d4edda; border-left: 4px solid #28a745; padding: 12px 18px;
+          border-radius: 4px; margin: 16px 0; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px;
+         font-family: "SF Mono", Consolas, monospace; font-size: 0.9em; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; background: #fff; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; font-size: 0.9em; }
+  th { background: #ff8200; color: #fff; }
+</style>
+</head>
+<body>
+
+<h1>Week 8 — Complete Runnable Reference</h1>
+
+<p><strong>Physics 311 · Block 3: Browser Port.</strong> Every piece of Week 8's code,
+in one working file: <code>Vec2</code>, <code>Camera</code>, both integrators, the
+clamped fixed-timestep accumulator, and a live energy HUD.</p>
+
+<div class="good">
+  <strong>&#128300; Open this file directly — no Live Server needed.</strong> It uses one
+  inline <code>&lt;script&gt;</code> rather than ES6 modules, so it runs from a
+  <code>file://</code> URL. <strong>Your Lab 8 submission must use real modules</strong>
+  (<code>import</code>/<code>export</code> across separate files), which <em>does</em>
+  require Live Server. This file is a reference you can always fall back to when your
+  modular version breaks.
+</div>
+
+<canvas id="sim" width="900" height="520"></canvas>
+
+<div class="panel">
+  <label>Integrator
+    <select id="integrator">
+      <option value="verlet">Velocity Verlet</option>
+      <option value="euler-cromer">Euler-Cromer</option>
+      <option value="euler">Euler (watch it fail)</option>
+    </select>
+  </label>
+  <label>Scene
+    <select id="scene">
+      <option value="projectile">Projectile (v0=25, 45&deg;)</option>
+      <option value="spring">Spring oscillator (m=k=1)</option>
+    </select>
+  </label>
+  <label>DT
+    <select id="dt">
+      <option value="240">1/240 s</option>
+      <option value="120">1/120 s</option>
+      <option value="60">1/60 s</option>
+      <option value="20">1/20 s (coarse)</option>
+    </select>
+  </label>
+  <button id="pause">Pause</button>
+  <button id="reset">Reset</button>
+  <button class="alt" id="validate">Validate at t = 2.0 s</button>
+</div>
+
+<div id="log">Ready. Press <b>Validate</b> to reproduce the notebook's reference numbers.</div>
+
+<!-- ================================================================= -->
+<h2>What to check</h2>
+
+<div class="note">
+  <strong>&#128161; The validation button is the point of this page.</strong> It resets the
+  scene, steps exactly 480 times at DT = 1/240 (no rendering, no frame timing), and prints
+  the result beside the Python reference from
+  <code>week8_js_port_reference.ipynb</code>. Agreement to 1e-12 means your browser and
+  your Python agree <em>bit for bit</em> — which is the expected outcome, because both use
+  IEEE-754 doubles.
+</div>
+
+<table>
+  <thead><tr><th>Scene / method</th><th>Quantity</th><th>Reference value</th></tr></thead>
+  <tbody>
+    <tr><td>Projectile, Verlet</td><td>y at t = 2.0 s</td><td>15.735339059327 m <em>(= exact)</em></td></tr>
+    <tr><td>Projectile, Verlet</td><td>&Delta;E/E&#8320;</td><td>~2e-15</td></tr>
+    <tr><td>Projectile, Euler-Cromer</td><td>y at t = 2.0 s</td><td>15.694464059327 m</td></tr>
+    <tr><td>Projectile, Euler-Cromer</td><td>&Delta;E/E&#8320;</td><td>&minus;1.283148e-03</td></tr>
+    <tr><td>Projectile, either</td><td>v<sub>y</sub> at t = 2.0 s</td><td>&minus;1.942330470336 m/s <em>(identical!)</em></td></tr>
+    <tr><td>Spring, Euler</td><td>max |&Delta;E|/E&#8320; over 10T</td><td>2.99e-01 &mdash; <strong>29.9%</strong></td></tr>
+    <tr><td>Spring, Euler-Cromer</td><td>max |&Delta;E|/E&#8320; over 10T</td><td>2.09e-03</td></tr>
+    <tr><td>Spring, Verlet</td><td>max |&Delta;E|/E&#8320; over 10T</td><td>4.34e-06</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <strong>&#9888;&#65039; Euler-Cromer's 4 cm position error is not a bug.</strong> It is
+  exactly &minus;&frac12;g&thinsp;t&thinsp;&Delta;t = &minus;0.040875 m &mdash; the
+  closed-form prediction from the Week 2 &sect;5.5 insert. Note that
+  <strong>v<sub>y</sub> is identical in both methods</strong>: with a constant force the
+  velocity update is exact, so the entire discrepancy lives in the position update.
+  Switch to the <strong>spring</strong> scene to see the integrators actually separate.
+</div>
+
+<script>
+"use strict";
+
+/* ===================================================================
+   1. Vec2 — replaces np.array([x, y])
+   =================================================================== */
+class Vec2 {
+  constructor(x = 0, y = 0) { this.x = x; this.y = y; }
+
+  // allocating: return a NEW Vec2 (readable; use by default)
+  add(v)     { return new Vec2(this.x + v.x, this.y + v.y); }
+  sub(v)     { return new Vec2(this.x - v.x, this.y - v.y); }
+  mul(s)     { return new Vec2(this.x * s,   this.y * s);   }
+  dot(v)     { return this.x * v.x + this.y * v.y; }
+  lengthSq() { return this.x * this.x + this.y * this.y; }
+  length()   { return Math.hypot(this.x, this.y); }
+  clone()    { return new Vec2(this.x, this.y); }
+  normalized() {
+    const L = this.length();
+    return L === 0 ? new Vec2(0, 0) : new Vec2(this.x / L, this.y / L);
+  }
+
+  // in-place: mutate THIS, allocate nothing (use inside hot loops)
+  addTo(v)        { this.x += v.x;     this.y += v.y;     return this; }
+  addScaled(v, s) { this.x += v.x * s; this.y += v.y * s; return this; }
+  set(x, y)       { this.x = x;        this.y = y;        return this; }
+  zero()          { this.x = 0;        this.y = 0;        return this; }
+}
+
+/* ===================================================================
+   2. Camera — physics metres <-> canvas pixels (owns the y-flip)
+   =================================================================== */
+class Camera {
+  constructor(scale, originX, originY) {
+    this.scale = scale; this.originX = originX; this.originY = originY;
+  }
+  toScreenX(x)   { return this.originX + x * this.scale; }
+  toScreenY(y)   { return this.originY - y * this.scale; }   // MINUS = the flip
+  toWorldX(px)   { return (px - this.originX) / this.scale; }
+  toWorldY(py)   { return (this.originY - py) / this.scale; }
+  toScreenLen(L) { return L * this.scale; }
+}
+
+/* ===================================================================
+   3. Body
+   =================================================================== */
+class Body {
+  constructor({ mass = 1, pos = new Vec2(), vel = new Vec2(), radius = 0.25,
+                color = "#ff8200", fixed = false } = {}) {
+    this.mass = mass;
+    this.invMass = fixed ? 0 : 1 / mass;
+    this.pos = pos.clone();
+    this.vel = vel.clone();
+    this.acc = new Vec2();
+    this.force = new Vec2();
+    this.radius = radius;
+    this.color = color;
+    this.fixed = fixed;
+    this.trail = [];
+  }
+}
+
+/* ===================================================================
+   4. Forces — each has apply(world); conservative ones add potentialEnergy
+   =================================================================== */
+class Gravity {
+  constructor(g = 9.81) { this.g = g; }
+  apply(world) {
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      b.force.y -= b.mass * this.g;
+    }
+  }
+  potentialEnergy(world) {
+    let U = 0;
+    for (const b of world.bodies) if (!b.fixed) U += b.mass * this.g * b.pos.y;
+    return U;
+  }
+}
+
+class Spring {
+  constructor(body, anchor, k, restLength = 0) {
+    this.body = body; this.anchor = anchor.clone();
+    this.k = k; this.restLength = restLength;
+  }
+  apply() {
+    const d = this.body.pos.sub(this.anchor);
+    const L = d.length();
+    if (L === 0) return;                            // guard: avoid 0/0
+    const stretch = L - this.restLength;
+    this.body.force.addTo(d.mul(-this.k * stretch / L));
+  }
+  potentialEnergy() {
+    const s = this.body.pos.sub(this.anchor).length() - this.restLength;
+    return 0.5 * this.k * s * s;
+  }
+}
+
+/* ===================================================================
+   5. Integrators — the SAME lines as your Python, in JS syntax
+   =================================================================== */
+class Euler {
+  step(world, dt) {
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      b.acc.set(b.force.x * b.invMass, b.force.y * b.invMass);
+      b.pos.addScaled(b.vel, dt);     // position uses the OLD velocity
+      b.vel.addScaled(b.acc, dt);     // ...then velocity. This is the bad one.
+    }
+  }
+}
+
+class EulerCromer {
+  step(world, dt) {
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      b.acc.set(b.force.x * b.invMass, b.force.y * b.invMass);
+      b.vel.addScaled(b.acc, dt);     // velocity FIRST
+      b.pos.addScaled(b.vel, dt);     // then position, with the NEW velocity
+    }
+  }
+}
+
+class VelocityVerlet {
+  step(world, dt) {
+    // 1. drift + half kick, using the acceleration carried on the body
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      b.pos.x += b.vel.x * dt + 0.5 * b.acc.x * dt * dt;
+      b.pos.y += b.vel.y * dt + 0.5 * b.acc.y * dt * dt;
+    }
+    // 2. recompute forces at the NEW positions
+    world.clearForces();
+    world.applyForces();
+    // 3. finish velocity with the average of old and new acceleration
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      const axN = b.force.x * b.invMass, ayN = b.force.y * b.invMass;
+      b.vel.x += 0.5 * (b.acc.x + axN) * dt;
+      b.vel.y += 0.5 * (b.acc.y + ayN) * dt;
+      b.acc.set(axN, ayN);            // carry forward — this is the trick
+    }
+  }
+}
+
+/* ===================================================================
+   6. World — owns bodies, forces, integrator; knows nothing about canvas
+   =================================================================== */
+class World {
+  constructor(integrator) {
+    this.bodies = []; this.forces = [];
+    this.integrator = integrator;
+    this.time = 0; this.steps = 0;
+  }
+  add(b)      { this.bodies.push(b); return b; }
+  addForce(f) { this.forces.push(f); return f; }
+
+  clearForces() { for (const b of this.bodies) b.force.zero(); }
+  applyForces() { for (const f of this.forces) f.apply(this); }
+
+  // prime b.acc before the first Verlet step, or the first step is wrong
+  primeAccelerations() {
+    this.clearForces(); this.applyForces();
+    for (const b of this.bodies) {
+      if (b.fixed) continue;
+      b.acc.set(b.force.x * b.invMass, b.force.y * b.invMass);
+    }
+  }
+
+  step(dt) {
+    this.clearForces();
+    this.applyForces();
+    this.integrator.step(this, dt);
+    this.time += dt;
+    this.steps += 1;
+  }
+
+  kineticEnergy() {
+    let K = 0;
+    for (const b of this.bodies) if (!b.fixed) K += 0.5 * b.mass * b.vel.lengthSq();
+    return K;
+  }
+  potentialEnergy() {
+    let U = 0;
+    for (const f of this.forces) if (f.potentialEnergy) U += f.potentialEnergy(this);
+    return U;
+  }
+  totalEnergy() { return this.kineticEnergy() + this.potentialEnergy(); }
+}
+
+/* ===================================================================
+   7. Scene builders — the ONLY place initial conditions live
+   =================================================================== */
+const G = 9.81;
+
+function makeIntegrator(name) {
+  if (name === "euler")        return new Euler();
+  if (name === "euler-cromer") return new EulerCromer();
+  return new VelocityVerlet();
+}
+
+function buildProjectile(integratorName) {
+  const w = new World(makeIntegrator(integratorName));
+  const v0 = 25, th = 45 * Math.PI / 180;
+  w.add(new Body({
+    mass: 1, radius: 0.35, color: "#ff8200",
+    pos: new Vec2(0, 0),
+    vel: new Vec2(v0 * Math.cos(th), v0 * Math.sin(th))
+  }));
+  w.addForce(new Gravity(G));
+  w.primeAccelerations();
+  w.meta = { kind: "projectile", camera: new Camera(13, 60, 470), yRef: 0 };
+  return w;
+}
+
+function buildSpring(integratorName) {
+  const w = new World(makeIntegrator(integratorName));
+  const b = w.add(new Body({
+    mass: 1, radius: 0.09, color: "#4ec9b0",
+    pos: new Vec2(1, 0), vel: new Vec2(0, 0)
+  }));
+  w.addForce(new Spring(b, new Vec2(0, 0), 1.0, 0));
+  w.primeAccelerations();
+  w.meta = { kind: "spring", camera: new Camera(180, 450, 260), anchor: new Vec2(0, 0) };
+  return w;
+}
+
+function buildScene(sceneName, integratorName) {
+  return sceneName === "spring" ? buildSpring(integratorName)
+                                : buildProjectile(integratorName);
+}
+
+/* ===================================================================
+   8. Renderer — ALL ctx.* drawing lives here; never modifies a body
+   =================================================================== */
+const canvas = document.getElementById("sim");
+const ctx = canvas.getContext("2d");
+
+function drawGrid(cam, spacing, label) {
+  ctx.strokeStyle = "#2f2f2f"; ctx.lineWidth = 1;
+  ctx.fillStyle = "#888"; ctx.font = "11px monospace";
+
+  const x0 = Math.ceil(cam.toWorldX(0) / spacing) * spacing;
+  const x1 = cam.toWorldX(canvas.width);
+  for (let x = x0; x <= x1; x += spacing) {
+    const px = cam.toScreenX(x);
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, canvas.height); ctx.stroke();
+    if (Math.abs(x) > 1e-9) ctx.fillText(x.toFixed(label), px + 3, canvas.height - 5);
+  }
+  const y0 = Math.ceil(cam.toWorldY(canvas.height) / spacing) * spacing;
+  const y1 = cam.toWorldY(0);
+  for (let y = y0; y <= y1; y += spacing) {
+    const py = cam.toScreenY(y);
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(canvas.width, py); ctx.stroke();
+    if (Math.abs(y) > 1e-9) ctx.fillText(y.toFixed(label), 4, py - 4);
+  }
+  // axes
+  ctx.strokeStyle = "#5a5a5a"; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, cam.toScreenY(0)); ctx.lineTo(canvas.width, cam.toScreenY(0));
+  ctx.moveTo(cam.toScreenX(0), 0); ctx.lineTo(cam.toScreenX(0), canvas.height);
+  ctx.stroke();
+}
+
+function drawScaleBar(cam, metres, text) {
+  const px = cam.toScreenLen(metres);
+  const x = canvas.width - px - 24, y = 30;
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y); ctx.lineTo(x + px, y);
+  ctx.moveTo(x, y - 5); ctx.lineTo(x, y + 5);
+  ctx.moveTo(x + px, y - 5); ctx.lineTo(x + px, y + 5);
+  ctx.stroke();
+  ctx.fillStyle = "#fff"; ctx.font = "12px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(text, x + px / 2, y - 10);
+  ctx.textAlign = "left";
+}
+
+function draw(world, hud) {
+  const cam = world.meta.camera;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (world.meta.kind === "spring") {
+    drawGrid(cam, 0.5, 1);
+    drawScaleBar(cam, 1, "1.0 m");
+    const b = world.bodies[0];
+    // the spring itself
+    ctx.strokeStyle = "#6a9955"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cam.toScreenX(0), cam.toScreenY(0));
+    ctx.lineTo(cam.toScreenX(b.pos.x), cam.toScreenY(b.pos.y));
+    ctx.stroke();
+    // anchor
+    ctx.fillStyle = "#888";
+    ctx.fillRect(cam.toScreenX(0) - 5, cam.toScreenY(0) - 5, 10, 10);
+  } else {
+    drawGrid(cam, 5, 0);
+    drawScaleBar(cam, 5, "5 m");
+    // ground line at y = 0
+    ctx.strokeStyle = "#28a745"; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, cam.toScreenY(0)); ctx.lineTo(canvas.width, cam.toScreenY(0));
+    ctx.stroke();
+  }
+
+  for (const b of world.bodies) {
+    // trail
+    if (b.trail.length > 1) {
+      ctx.strokeStyle = "rgba(255,130,0,0.45)"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cam.toScreenX(b.trail[0].x), cam.toScreenY(b.trail[0].y));
+      for (let i = 1; i < b.trail.length; i++)
+        ctx.lineTo(cam.toScreenX(b.trail[i].x), cam.toScreenY(b.trail[i].y));
+      ctx.stroke();
+    }
+    // body
+    ctx.beginPath();
+    ctx.arc(cam.toScreenX(b.pos.x), cam.toScreenY(b.pos.y),
+            Math.max(4, cam.toScreenLen(b.radius)), 0, Math.PI * 2);
+    ctx.fillStyle = b.color; ctx.fill();
+    // velocity vector
+    const vs = world.meta.kind === "spring" ? 0.6 : 0.25;
+    const tipX = cam.toScreenX(b.pos.x + b.vel.x * vs);
+    const tipY = cam.toScreenY(b.pos.y + b.vel.y * vs);
+    ctx.strokeStyle = "#9cdcfe"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cam.toScreenX(b.pos.x), cam.toScreenY(b.pos.y));
+    ctx.lineTo(tipX, tipY); ctx.stroke();
+  }
+
+  // ---- HUD ----
+  const drift = hud.E0 === 0 ? 0 : (world.totalEnergy() - hud.E0) / hud.E0;
+  const lines = [
+    "t      = " + world.time.toFixed(4) + " s",
+    "steps  = " + world.steps,
+    "fps    = " + hud.fps.toFixed(0) + "   (steps/frame " + hud.lastSteps + ")",
+    "DT     = 1/" + hud.dtDenom + " s",
+    "method = " + hud.method,
+    "E      = " + world.totalEnergy().toFixed(6) + " J",
+    "dE/E0  = " + (drift >= 0 ? "+" : "") + drift.toExponential(3)
+  ];
+  ctx.font = "13px monospace"; ctx.textBaseline = "top";
+  ctx.fillStyle = "rgba(0,0,0,0.65)";
+  ctx.fillRect(8, 8, 250, lines.length * 18 + 14);
+  for (let i = 0; i < lines.length; i++) {
+    ctx.fillStyle = (i === lines.length - 1)
+      ? (Math.abs(drift) > 0.01 ? "#f48771" : "#4ec9b0") : "#d4d4d4";
+    ctx.fillText(lines[i], 18, 16 + i * 18);
+  }
+  ctx.textBaseline = "alphabetic";
+}
+
+/* ===================================================================
+   9. The fixed-timestep accumulator — the one new idea this week
+   =================================================================== */
+const MAX_FRAME = 0.25;     // clamp: never catch up more than 0.25 s
+
+let dtDenom = 240;
+let DT = 1 / dtDenom;
+let world, hud, paused = false;
+let accumulator = 0, lastTime = performance.now() / 1000;
+let fpsEMA = 60;
+
+function resetSim() {
+  const sceneName = document.getElementById("scene").value;
+  const method    = document.getElementById("integrator").value;
+  dtDenom = parseInt(document.getElementById("dt").value, 10);
+  DT = 1 / dtDenom;
+
+  world = buildScene(sceneName, method);
+  hud = { E0: world.totalEnergy(), fps: 60, lastSteps: 0,
+          method: method, dtDenom: dtDenom };
+  accumulator = 0;
+  lastTime = performance.now() / 1000;
+}
+
+function frame(nowMs) {
+  const now = nowMs / 1000;
+  let frameTime = now - lastTime;
+  lastTime = now;
+
+  if (frameTime > 0) fpsEMA = 0.9 * fpsEMA + 0.1 * (1 / frameTime);
+  hud.fps = fpsEMA;
+
+  // THE CLAMP. Without it, a tab-switch hands you frameTime = 30 s,
+  // you attempt 7200 steps in one frame, and the page locks up.
+  if (frameTime > MAX_FRAME) frameTime = MAX_FRAME;
+
+  let n = 0;
+  if (!paused) {
+    accumulator += frameTime;
+    while (accumulator >= DT) {
+      world.step(DT);              // ALWAYS the same dt
+      accumulator -= DT;
+      n++;
+      if (world.steps % 4 === 0) {
+        const b = world.bodies[0];
+        b.trail.push(b.pos.clone());
+        if (b.trail.length > 600) b.trail.shift();
+      }
+      // projectile: stop cleanly at the ground
+      if (world.meta.kind === "projectile" && world.bodies[0].pos.y < 0) {
+        paused = true;
+        document.getElementById("pause").textContent = "Resume";
+        break;
+      }
+    }
+  }
+  hud.lastSteps = n;
+
+  draw(world, hud);                // draw ONCE per frame, whatever n was
+  requestAnimationFrame(frame);
+}
+
+/* ===================================================================
+   10. On-page console + the validation harness
+   =================================================================== */
+const logEl = document.getElementById("log");
+function clearLog() { logEl.textContent = ""; }
+function say(s, cls) {
+  const span = document.createElement("span");
+  if (cls) span.className = cls;
+  span.textContent = s + "\n";
+  logEl.appendChild(span);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function vec2SelfTest() {
+  const a = new Vec2(3, 4), b = new Vec2(1, -2);
+  say("=== Vec2 self-test (Lab 8 Part A) ===", "dim");
+  const checks = [
+    ["a.add(b)",       `(${a.add(b).x}, ${a.add(b).y})`,            "(4, 2)"],
+    ["a.sub(b)",       `(${a.sub(b).x}, ${a.sub(b).y})`,            "(2, 6)"],
+    ["a.mul(2)",       `(${a.mul(2).x}, ${a.mul(2).y})`,            "(6, 8)"],
+    ["a.dot(b)",       a.dot(b).toFixed(10),                        "-5.0000000000"],
+    ["a.length()",     a.length().toFixed(10),                      "5.0000000000"],
+    ["a.lengthSq()",   a.lengthSq().toFixed(10),                    "25.0000000000"],
+    ["a.normalized()", `(${a.normalized().x.toFixed(10)}, ${a.normalized().y.toFixed(10)})`,
+                       "(0.6000000000, 0.8000000000)"],
+    ["|normalized|",   a.normalized().length().toFixed(15),         "1.000000000000000"]
+  ];
+  let allPass = true;
+  for (const [name, got, want] of checks) {
+    const pass = got === want;
+    if (!pass) allPass = false;
+    say((pass ? "  PASS  " : "  FAIL  ") + name.padEnd(16) + "= " + got.padEnd(30) +
+        (pass ? "" : " expected " + want), pass ? "ok" : "bad");
+  }
+  say(allPass ? "  -> all Vec2 operations agree with Python exactly."
+              : "  -> MISMATCH: fix Vec2 before trusting anything downstream.",
+      allPass ? "ok" : "bad");
+  say("");
+}
+
+/* Headless run: no canvas, no frame timing — pure physics.
+   This is possible ONLY because nothing in World/Body/Force mentions ctx. */
+function runHeadless(sceneName, method, dt, tEnd) {
+  const w = buildScene(sceneName, method);
+  const E0 = w.totalEnergy();
+  let Emin = E0, Emax = E0;
+  while (w.time < tEnd - 1e-12) {
+    w.step(dt);
+    const E = w.totalEnergy();
+    if (E < Emin) Emin = E;
+    if (E > Emax) Emax = E;
+  }
+  const b = w.bodies[0];
+  return { x: b.pos.x, y: b.pos.y, vx: b.vel.x, vy: b.vel.y,
+           t: w.time, n: w.steps, E0: E0, E: w.totalEnergy(),
+           worst: Math.max(Math.abs(Emax - E0), Math.abs(Emin - E0)) / E0 };
+}
+
+function row(label, got, ref, tol) {
+  const err = Math.abs(got - ref);
+  const pass = err <= tol;
+  say("  " + (pass ? "PASS" : "FAIL") + "  " + label.padEnd(22) +
+      got.toFixed(12).padStart(18) + ref.toFixed(12).padStart(20) +
+      ("  err " + err.toExponential(2)), pass ? "ok" : "bad");
+  return pass;
+}
+
+function validate() {
+  clearLog();
+  vec2SelfTest();
+
+  const DTv = 1 / 240;
+  let allPass = true;
+
+  // ---- Projectile, 480 steps to t = 2.0 s ----
+  say("=== Projectile: v0=25 m/s @ 45 deg, DT=1/240, t_end=2.0 s ===", "dim");
+  say("        quantity                        JavaScript       Python (ref)");
+
+  const REF = {
+    "euler-cromer": { x: 35.355339059327, y: 15.694464059327,
+                      vy: -1.942330470336, dE: -1.283148e-3 },
+    "verlet":       { x: 35.355339059327, y: 15.735339059327,
+                      vy: -1.942330470336, dE: 2.364686e-15 }
+  };
+
+  for (const m of ["euler-cromer", "verlet"]) {
+    const r = runHeadless("projectile", m, DTv, 2.0);
+    say("  -- " + m + "  (" + r.n + " steps) --", "dim");
+    if (r.n !== 480) {
+      say("  FAIL  step count = " + r.n + ", expected 480 " +
+          "-> your loop condition is wrong; nothing else will match.", "bad");
+      allPass = false;
+    }
+    allPass = row("x (m)",  r.x,  REF[m].x,  1e-9) && allPass;
+    allPass = row("y (m)",  r.y,  REF[m].y,  1e-9) && allPass;
+    allPass = row("vy (m/s)", r.vy, REF[m].vy, 1e-9) && allPass;
+    const dE = (r.E - r.E0) / r.E0;
+    say("        dE/E0" + " ".padEnd(17) +
+        (dE >= 0 ? "+" : "") + dE.toExponential(6).padStart(17) +
+        ("  ref " + REF[m].dE.toExponential(6)), "dim");
+  }
+
+  // ---- The Week 2 §5.5 callback ----
+  say("");
+  say("=== Euler-Cromer error vs. the Week 2 §5.5 closed form ===", "dim");
+  const ec = runHeadless("projectile", "euler-cromer", DTv, 2.0);
+  const yExact = 25 * Math.sin(45 * Math.PI / 180) * 2 - 0.5 * G * 4;
+  const dyMeas = ec.y - yExact;
+  const dyPred = -0.5 * G * 2.0 * DTv;
+  say("  measured  y_EC - y_exact  = " + dyMeas.toFixed(15) + " m");
+  say("  predicted -0.5*g*t*dt     = " + dyPred.toFixed(15) + " m");
+  say("  difference                = " + Math.abs(dyMeas - dyPred).toExponential(2) + " m",
+      Math.abs(dyMeas - dyPred) < 1e-11 ? "ok" : "bad");
+  say("  Verlet matches the exact answer because r + v*dt + 0.5*a*dt^2 IS", "dim");
+  say("  the exact kinematic equation when a is constant.", "dim");
+
+  // ---- Spring: where the integrators actually separate ----
+  say("");
+  say("=== Spring oscillator: m=k=1, x0=1, v0=0, 10 periods, DT=1/240 ===", "dim");
+  say("  (the honest test -- force depends on POSITION)");
+  const T10 = 10 * 2 * Math.PI;
+  const refWorst = { "euler": 2.992709e-1, "euler-cromer": 2.087683e-3,
+                     "verlet": 4.340278e-6 };
+  const refX = { "euler": 1.139854950642, "euler-cromer": 0.999995657522,
+                 "verlet": 0.999998836099 };
+  say("  method        x(10T)            max|dE|/E0      Python ref");
+  for (const m of ["euler", "euler-cromer", "verlet"]) {
+    const r = runHeadless("spring", m, DTv, T10);
+    const okx = Math.abs(r.x - refX[m]) < 1e-9;
+    if (!okx) allPass = false;
+    say("  " + (okx ? "PASS" : "FAIL") + "  " + m.padEnd(14) +
+        r.x.toFixed(12).padStart(16) + r.worst.toExponential(3).padStart(16) +
+        refWorst[m].toExponential(3).padStart(16), okx ? "ok" : "bad");
+  }
+  say("  exact after 10 periods: x = 1.0, v = 0.0", "dim");
+  say("  Euler has pumped the amplitude 14% wider all by itself.", "dim");
+
+  // ---- Accumulator: frame-rate independence ----
+  say("");
+  say("=== Fixed-timestep accumulator: frame-rate independence ===", "dim");
+  function accRun(frames, clamp) {
+    let acc = 0, t = 0, steps = 0, worst = 0;
+    for (let ft of frames) {
+      if (ft > clamp) ft = clamp;
+      acc += ft;
+      let k = 0;
+      while (acc >= DTv) { t += DTv; steps++; k++; acc -= DTv; }
+      if (k > worst) worst = k;
+    }
+    return { t, steps, worst };
+  }
+  const smooth = new Array(600).fill(1 / 60);
+  const hi     = new Array(1440).fill(1 / 144);
+  const jitter = [];
+  for (let i = 0; i < 300; i++) jitter.push(1 / 40, 1 / 120);
+
+  say("  pattern         frames   steps        sim_t(s)   worst steps/frame");
+  for (const [name, f] of [["smooth 60 Hz", smooth], ["144 Hz", hi],
+                           ["jittery", jitter]]) {
+    const r = accRun(f, MAX_FRAME);
+    const ok = r.steps === 2400 && Math.abs(r.t - 10) < 1e-9;
+    if (!ok) allPass = false;
+    say("  " + (ok ? "PASS" : "FAIL") + "  " + name.padEnd(14) +
+        String(f.length).padStart(7) + String(r.steps).padStart(8) +
+        r.t.toFixed(10).padStart(16) + String(r.worst).padStart(16),
+        ok ? "ok" : "bad");
+  }
+  say("  All three advance physics identically. That is the whole point.", "dim");
+
+  // ---- The clamp ----
+  const stall = new Array(300).fill(1 / 60);
+  stall.push(2.0);
+  for (let i = 0; i < 299; i++) stall.push(1 / 60);
+  const c1 = accRun(stall, MAX_FRAME), c2 = accRun(stall, 1e9);
+  say("");
+  say("=== Why the frame-time clamp matters (one 2 s tab-switch) ===", "dim");
+  say("  clamped at 0.25 s : worst frame = " + c1.worst + " steps, " +
+      "sim_t = " + c1.t.toFixed(4) + " s", "ok");
+  say("  NO clamp          : worst frame = " + c2.worst + " steps, " +
+      "sim_t = " + c2.t.toFixed(4) + " s", "bad");
+  say("  480 steps in one frame is a visible freeze. If those steps take", "dim");
+  say("  longer than real time, the accumulator never drains and the tab", "dim");
+  say("  locks up forever -- the 'spiral of death'. Always clamp.", "dim");
+
+  say("");
+  say(allPass
+      ? "######  ALL CHECKS PASSED -- this port agrees with Python to 1e-9+  ######"
+      : "######  SOME CHECKS FAILED -- see the FAIL rows above  ######",
+      allPass ? "ok" : "bad");
+}
+
+/* ===================================================================
+   11. Wiring
+   =================================================================== */
+document.getElementById("pause").addEventListener("click", (e) => {
+  paused = !paused;
+  e.target.textContent = paused ? "Resume" : "Pause";
+  lastTime = performance.now() / 1000;      // don't bank the paused time
+});
+document.getElementById("reset").addEventListener("click", () => {
+  resetSim();
+  paused = false;
+  document.getElementById("pause").textContent = "Pause";
+});
+for (const id of ["integrator", "scene", "dt"]) {
+  document.getElementById(id).addEventListener("change", () => {
+    resetSim();
+    paused = false;
+    document.getElementById("pause").textContent = "Pause";
+  });
+}
+document.getElementById("validate").addEventListener("click", validate);
+
+// keyboard: Space = pause, R = reset
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space") { e.preventDefault(); document.getElementById("pause").click(); }
+  if (e.key === "r" || e.key === "R") document.getElementById("reset").click();
+});
+
+resetSim();
+vec2SelfTest();
+requestAnimationFrame(frame);
+</script>
+
+<!-- ================================================================= -->
+<h2>The file layout you should actually submit</h2>
+
+<p>This page is deliberately one file so it runs anywhere. <strong>Lab 8 wants
+modules.</strong> Split it like this and the Week 9 refactor costs you nothing:</p>
+
+<pre style="background:#1e1e1e;color:#d4d4d4;padding:16px 20px;border-radius:6px;
+            font-family:'SF Mono',Consolas,monospace;font-size:0.85em;overflow-x:auto">
+labs/lab08/
+  index.html
+  style.css
+  main.js              <span style="color:#6a9955">// wiring only: build scene, start the loop</span>
+  engine/              <span style="color:#6a9955">// NO ctx, NO canvas, NO document in here</span>
+    vec2.js            <span style="color:#6a9955">// Vec2</span>
+    body.js            <span style="color:#6a9955">// Body</span>
+    forces.js          <span style="color:#6a9955">// Gravity, Spring, Drag</span>
+    integrators.js     <span style="color:#6a9955">// Euler, EulerCromer, VelocityVerlet</span>
+    world.js           <span style="color:#6a9955">// World</span>
+  render/              <span style="color:#6a9955">// NEVER modifies a body's state</span>
+    camera.js          <span style="color:#6a9955">// metres &lt;-&gt; pixels, owns the y-flip</span>
+    renderer.js        <span style="color:#6a9955">// all ctx.* drawing</span>
+</pre>
+
+<div class="note">
+  <strong>&#128161; The layering rule, stated once and enforced all semester.</strong>
+  Nothing in <code>engine/</code> may mention <code>canvas</code>, <code>ctx</code>, or
+  <code>document</code>. Nothing in <code>render/</code> may modify a body's state. The
+  <code>runHeadless()</code> function above is proof that it pays off: it runs 15,080
+  physics steps with no canvas at all. In Week 13 the same trick makes your required
+  convergence study about twenty lines. Blur the boundary and you will be untangling a
+  renderer under deadline pressure in Week 12.
+</div>
+
+<h2>Port bugs, ranked by how often they appear</h2>
+
+<table>
+  <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>Blank canvas, no console error</td><td><code>width</code>/<code>height</code> set in CSS, not HTML attributes</td><td><code>&lt;canvas width="900" height="520"&gt;</code></td></tr>
+    <tr><td><code>Failed to load module script</code></td><td>ES6 modules blocked on <code>file://</code></td><td>Open with <strong>Live Server</strong></td></tr>
+    <tr><td>Same, but served over HTTP</td><td>Missing <code>.js</code> in an import</td><td><code>from "./engine/vec2.js"</code> &mdash; the extension is required</td></tr>
+    <tr><td>Everything upside down</td><td>y-flip missing, or applied twice</td><td>Flip in <code>Camera.toScreenY</code> only</td></tr>
+    <tr><td>Physics "runs" but nothing moves</td><td><code>let p = b.pos; p = p.add(v)</code> rebinds a local</td><td><code>b.pos.addScaled(b.vel, dt)</code></td></tr>
+    <tr><td>Bodies drift slowly off-screen</td><td><code>addTo</code> mutating a shared <code>Vec2</code></td><td><code>clone()</code> on assignment</td></tr>
+    <tr><td>Speed depends on the monitor</td><td>Stepping by <code>frameTime</code>, not <code>DT</code></td><td>Use the accumulator</td></tr>
+    <tr><td>Page freezes after a tab switch</td><td>No frame-time clamp</td><td><code>if (frameTime &gt; 0.25) frameTime = 0.25;</code></td></tr>
+    <tr><td><code>NaN</code> after one frame</td><td>Uninitialized <code>lastTime</code>, or normalizing a zero vector</td><td>Set <code>lastTime</code> before the first <code>rAF</code>; guard <code>L === 0</code></td></tr>
+    <tr><td>Verlet behaves like Euler-Cromer</td><td><code>b.acc</code> never primed, or not carried forward</td><td>Call <code>primeAccelerations()</code>; store <code>acc</code> at the end of the step</td></tr>
+    <tr><td>Energy drift ~100&times; expected</td><td>Degrees passed where radians expected</td><td><code>Math.cos</code> takes <strong>radians</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="good">
+  <strong>&#128300; The debugging order that works.</strong> (1) Read the console &mdash;
+  the actual error, not the first red line. (2) Network tab: did every <code>.js</code>
+  load, or did one 404? (3) <code>console.log</code> one body's position for the first
+  three steps and compare against the notebook. (4) <em>Only then</em> look at the drawing
+  code. Students lose hours debugging renderers when the physics never ran.
+</div>
+
+</body>
+</html>
