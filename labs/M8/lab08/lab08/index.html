@@ -67,10 +67,37 @@
 </table>
 
 <div class="warn">
-  <strong>&#9888;Euler-Cromer's 4 cm position error is not a bug.</strong> It is
-  exactly &minus;&frac12;g&thinsp;t&thinsp;&Delta;t = &minus;0.040875 m.
+  <strong>&#9888;Euler-Cromer's 4 cm position error is not a bug.</strong> 
 </div>
 
 <script type="module" src="main.js"></script>
+
+<h2>Port bugs, ranked by how often they appear</h2>
+
+<table>
+  <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>Blank canvas, no console error</td><td><code>width</code>/<code>height</code> set in CSS, not HTML attributes</td><td><code>&lt;canvas width="900" height="520"&gt;</code></td></tr>
+    <tr><td><code>Failed to load module script</code></td><td>ES6 modules blocked on <code>file://</code></td><td>Open with <strong>Live Server</strong></td></tr>
+    <tr><td>Same, but served over HTTP</td><td>Missing <code>.js</code> in an import</td><td><code>from "./engine/vec2.js"</code> &mdash; the extension is required</td></tr>
+    <tr><td>Everything upside down</td><td>y-flip missing, or applied twice</td><td>Flip in <code>Camera.toScreenY</code> only</td></tr>
+    <tr><td>Physics "runs" but nothing moves</td><td><code>let p = b.pos; p = p.add(v)</code> rebinds a local</td><td><code>b.pos.addScaled(b.vel, dt)</code></td></tr>
+    <tr><td>Bodies drift slowly off-screen</td><td><code>addTo</code> mutating a shared <code>Vec2</code></td><td><code>clone()</code> on assignment</td></tr>
+    <tr><td>Speed depends on the monitor</td><td>Stepping by <code>frameTime</code>, not <code>DT</code></td><td>Use the accumulator</td></tr>
+    <tr><td>Page freezes after a tab switch</td><td>No frame-time clamp</td><td><code>if (frameTime &gt; 0.25) frameTime = 0.25;</code></td></tr>
+    <tr><td><code>NaN</code> after one frame</td><td>Uninitialized <code>lastTime</code>, or normalizing a zero vector</td><td>Set <code>lastTime</code> before the first <code>rAF</code>; guard <code>L === 0</code></td></tr>
+    <tr><td>Verlet behaves like Euler-Cromer</td><td><code>b.acc</code> never primed, or not carried forward</td><td>Call <code>primeAccelerations()</code>; store <code>acc</code> at the end of the step</td></tr>
+    <tr><td>Energy drift ~100&times; expected</td><td>Degrees passed where radians expected</td><td><code>Math.cos</code> takes <strong>radians</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="good">
+    <strong>The debugging order that works.</strong> (1) Read the console &mdash;
+  the actual error, not the first red line. (2) Network tab: did every <code>.js</code>
+  load, or did one 404? (3) <code>console.log</code> one body's position for the first
+  three steps and compare against the notebook. (4) <em>Only then</em> look at the drawing
+  code. Students lose hours debugging renderers when the physics never ran.
+</div>
+
 </body>
 </html>
